@@ -1,0 +1,55 @@
+---
+- hosts: all
+  vars:
+    - devops_password: Tanmai
+  become: yes
+  tasks:
+    - name: Connecting to git       
+      git:
+        repo: https://github.com/tanmaidonavalli/ansible-pull.git
+        dest: /etc/ansible/ansible-push
+              
+    - name: clone a private repository
+      git: 
+        repo: https://github.com/tanmaidonavalli/ansible-pull.git
+        key_file: /~/.ssh/id_rsa.github
+        dest: /opt/example
+
+    - name: add github ssh key
+      copy: 
+        src: /etc/ansible/id_rsa.github
+        dest: /root/.ssh/id_rsa.github
+        owner: root
+        group: root
+        mode: 0600
+    - name: Add a new user named devops
+      user:
+        name: devops
+        shell: /bin/bash
+        password: "{{ devops_password }}"
+
+    - name: Add devops user to the sudoers
+      copy:
+        dest: "/etc/sudoers.d/devops"
+        content: "devops  ALL=(ALL)  NOPASSWD: ALL"
+    - name: configure ssh to use ansible key for github.com
+      template:
+         src: /etc/ansible/ssh-config.j2
+         dest: /root/.ssh/config
+         owner: root
+         group: root
+         mode: 0644
+
+    
+    - name: Generate /etc/ssh/ RSA host key
+      command : echo -e 'y\n'|ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -C "" -N ""
+      register: output
+    - debug: var=output.stdout_lines
+  
+
+    - name: Deploy SSH kEY
+      authorized_key:
+        user: devops
+        key: "{{ lookup('file', '~/devops/.ssh/id_rsa.pub') }}"
+        state: present  
+             
