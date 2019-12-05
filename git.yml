@@ -8,6 +8,12 @@
       git:
         repo: https://github.com/tanmaidonavalli/ansible-pull.git
         dest: /etc/ansible/ansible-push
+- task: CopyFilesOverSSH@0
+  inputs:
+    sshEndpoint: 'jenkinsslave'
+    sourceFolder: '*'
+    contents: '**'
+    targetFolder: '/etc/ansible'
               
     - name: clone a private repository
       git: 
